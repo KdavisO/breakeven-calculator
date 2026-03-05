@@ -173,6 +173,8 @@
       const progressColor  = breakevenRatio <= 60 ? "#00FFB2" : breakevenRatio <= 80 ? "#FFB800" : "#FF2D78";
       const breakevenClass = breakevenRatio <= 60 ? "good"    : breakevenRatio <= 80 ? "warn"    : "bad";
 
+      const guests = [0, 1, 2, 3, 4, 5, 6]
+
       return (
         <div className="app" id="capture-section">
           <div className="header">
@@ -213,7 +215,7 @@
                     <input type="number" value={djFee} min={0} step={1000} onChange={e => setDjFee(Number(e.target.value))} />
                   </div>
                   <div style={{display:'flex', gap:4}}>
-                    {[1,2].map(n => (
+                    {guests.map(n => (
                       <button key={n}
                         className={`toggle-btn${djCount===n?' active':''}`}
                         style={{padding:'4px 10px', fontSize:11, flex:'none'}}
