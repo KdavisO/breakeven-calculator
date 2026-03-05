@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BREAK EVEN · House Dance Event Calculator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0A0A0F; color: #E0E0F0; font-family: 'Space Mono', monospace; }
+    .app { min-height: 100vh; padding: 24px 16px; max-width: 900px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 32px; }
+    .title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 8vw, 72px);
+      letter-spacing: 4px; color: #00FFB2; line-height: 1;
+      text-shadow: 0 0 30px #00FFB288, 0 0 60px #00FFB244; }
+    .subtitle { font-size: 11px; letter-spacing: 3px; color: #666; margin-top: 6px; }
+    .event-info { font-size: 10px; color: #00FFB299; letter-spacing: 2px; margin-top: 8px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: #12121A; border: 1px solid #1E1E2E; border-radius: 12px; padding: 20px; }
+    .card-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px;
+      color: #00FFB2; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .card-title span { font-size: 14px; }
+    .field { margin-bottom: 12px; }
+    .label { font-size: 9px; letter-spacing: 2px; color: #888; margin-bottom: 4px; display: block; }
+    .input-row { display: flex; align-items: center; gap: 8px; }
+    .input-wrap { position: relative; flex: 1; }
+    .yen { position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      font-size: 11px; color: #555; pointer-events: none; }
+    input[type="number"] {
+      width: 100%; background: #0D0D18; border: 1px solid #252535;
+      border-radius: 6px; padding: 8px 10px 8px 24px;
+      color: #E0E0F0; font-family: 'Space Mono', monospace; font-size: 12px;
+      outline: none; transition: border-color 0.2s;
+      line-height: normal; height: 36px; vertical-align: middle;
+    }
+    input[type="number"]:focus { border-color: #00FFB288; }
+    input[type="number"]::-webkit-inner-spin-button { opacity: 0.3; }
+    .count-badge { background: #1A1A2A; border: 1px solid #252535; border-radius: 4px;
+      padding: 6px 10px; font-size: 11px; color: #888; white-space: nowrap; }
+    .subtotal { margin-top: 14px; padding-top: 12px; border-top: 1px solid #1E1E2E;
+      display: flex; justify-content: space-between; align-items: center; }
+    .subtotal-label { font-size: 9px; letter-spacing: 2px; color: #666; }
+    .subtotal-val { font-size: 13px; color: #FF2D78; }
+    .result-card { background: #12121A; border: 1px solid #00FFB233; border-radius: 12px;
+      padding: 24px; margin-top: 16px; position: relative; overflow: hidden; }
+    .result-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; background: linear-gradient(90deg, transparent, #00FFB2, transparent); }
+    .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    @media (max-width: 500px) { .result-grid { grid-template-columns: 1fr 1fr; } }
+    .metric { text-align: center; padding: 14px; background: #0D0D18; border-radius: 8px;
+      border: 1px solid #1E1E2E; }
+    .metric-val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; }
+    .metric-val.good { color: #00FFB2; text-shadow: 0 0 20px #00FFB266; }
+    .metric-val.warn { color: #FFB800; text-shadow: 0 0 20px #FFB80066; }
+    .metric-val.bad  { color: #FF2D78; text-shadow: 0 0 20px #FF2D7866; }
+    .metric-label { font-size: 8px; letter-spacing: 2px; color: #666; margin-top: 4px; }
+    .progress-section { margin-top: 16px; }
+    .progress-label { display: flex; justify-content: space-between;
+      font-size: 9px; letter-spacing: 2px; color: #666; margin-bottom: 6px; }
+    .progress-bar { height: 6px; background: #1A1A2A; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+    .scenarios { margin-top: 16px; }
+    .scenario-row { display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; border-radius: 6px; margin-bottom: 6px;
+      background: #0D0D18; border: 1px solid #1E1E2E; }
+    .scenario-label { font-size: 10px; color: #888; }
+    .scenario-pnl { font-size: 12px; font-weight: bold; }
+    .scenario-pnl.pos { color: #00FFB2; }
+    .scenario-pnl.neg { color: #FF2D78; }
+    .scenario-capacity { font-size: 9px; color: #555; }
+    .note-card { background: #0D0D18; border: 1px solid #FFB80033; border-radius: 8px;
+      padding: 14px; margin-top: 16px; }
+    .note-title { font-size: 9px; letter-spacing: 2px; color: #FFB800; margin-bottom: 8px; }
+    .note-item { font-size: 10px; color: #777; margin-bottom: 4px; padding-left: 12px;
+      position: relative; line-height: 1.5; }
+    .note-item::before { content: '▸'; position: absolute; left: 0; color: #FFB800; }
+    .toggle-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .toggle-btn { flex: 1; padding: 7px; border-radius: 6px; border: 1px solid #1E1E2E;
+      background: #0D0D18; color: #666; font-family: 'Space Mono', monospace;
+      font-size: 10px; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
+    .toggle-btn.active { background: #00FFB218; border-color: #00FFB266; color: #00FFB2; }
+    .divider { border: none; border-top: 1px solid #1E1E2E; margin: 20px 0; }
+    .export-btn { display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; margin-top: 16px; padding: 12px;
+      background: #00FFB218; border: 1px solid #00FFB266; border-radius: 8px;
+      color: #00FFB2; font-family: 'Space Mono', monospace; font-size: 11px;
+      letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
+    .export-btn:hover { background: #00FFB230; }
+    .export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    const fmt  = (n) => `¥${Math.round(n).toLocaleString()}`;
+    const fmtN = (n) => Math.round(n).toLocaleString();
+
+    function Field({ label, value, onChange, suffix }) {
+      return (
+        <div className="field">
+          <label className="label">{label}</label>
+          <div className="input-row">
+            <div className="input-wrap">
+              <span className="yen">¥</span>
+              <input type="number" value={value} min={0} step={1000}
+                onChange={e => onChange(Number(e.target.value))} />
+            </div>
+            {suffix && <div className="count-badge">{suffix}</div>}
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [venue,      setVenue]      = useState(85000);
+      const [dancerFee,  setDancerFee]  = useState(10000);
+      const [dancerCount, setDancerCount] = useState(5);
+      const [djFee,      setDjFee]      = useState(10000);
+      const [djCount,    setDjCount]    = useState(2);
+      const [transport,  setTransport]  = useState(2000);
+      const [staffFee,   setStaffFee]   = useState(2000);
+      const [staffCount, setStaffCount] = useState(1);
+      const [equipment,  setEquipment]  = useState(0);
+      const [promo,      setPromo]      = useState(0);
+      const [misc,       setMisc]       = useState(5000);
+      const [entryFee,   setEntryFee]   = useState(2000);
+      const [drinkMode,  setDrinkMode]  = useState("none");
+
+      const [exporting, setExporting] = useState(false);
+      const handleExport = async () => {
+        setExporting(true);
+        const el = document.getElementById('capture-section');
+        const canvas = await html2canvas(el, { backgroundColor: '#0A0A0F', scale: 2, useCORS: true });
+        const link = document.createElement('a');
+        link.download = 'breakeven-result.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        setExporting(false);
+      };
+      const [drinkPerPax,setDrinkPerPax]= useState(500);
+      const [capacity,   setCapacity]   = useState(100);
+
+      const totalPerformers = dancerCount + djCount;
+      const dancerTotal     = dancerFee  * dancerCount;
+      const djTotal         = djFee      * djCount;
+      const transportTotal  = transport  * totalPerformers;
+      const staffTotal      = staffFee   * staffCount;
+
+      const totalCost = useMemo(() =>
+        venue + dancerTotal + djTotal + transportTotal + staffTotal + equipment + promo + misc,
+        [venue, dancerTotal, djTotal, transportTotal, staffTotal, equipment, promo, misc]
+      );
+
+      const drinkRevPerPax = drinkMode === "split" ? drinkPerPax : 0;
+      const revenuePerPax  = entryFee + drinkRevPerPax;
+      const breakeven      = revenuePerPax > 0 ? Math.ceil(totalCost / revenuePerPax) : Infinity;
+      const breakevenRatio = Math.min(breakeven / capacity * 100, 200);
+
+      const pnlAtFull = revenuePerPax * capacity              - totalCost;
+      const pnlAt80   = revenuePerPax * Math.floor(capacity * 0.8) - totalCost;
+      const pnlAt60   = revenuePerPax * Math.floor(capacity * 0.6) - totalCost;
+      const pnlAt50   = revenuePerPax * Math.floor(capacity * 0.5) - totalCost;
+
+      const progressColor  = breakevenRatio <= 60 ? "#00FFB2" : breakevenRatio <= 80 ? "#FFB800" : "#FF2D78";
+      const breakevenClass = breakevenRatio <= 60 ? "good"    : breakevenRatio <= 80 ? "warn"    : "bad";
+
+      return (
+        <div className="app" id="capture-section">
+          <div className="header">
+            <div className="title">BREAK EVEN</div>
+            <div className="subtitle">HOUSE DANCE EVENT · FINANCIAL CALCULATOR</div>
+            <div className="event-info">📍 六本木 CUBE　⏱ 18:00 – 23:00　📅 WEEKEND</div>
+          </div>
+
+          <div className="grid">
+            {/* 固定費 */}
+            <div className="card">
+              <div className="card-title"><span>💴</span> 固定費 / COSTS</div>
+
+              <Field label="会場費 (CUBE 六本木 / 土曜デイタイム6h)" value={venue} onChange={setVenue} />
+              <div className="field">
+                <label className="label">ゲストダンサー ギャラ / 1名</label>
+                <div className="input-row">
+                  <div className="input-wrap">
+                    <span className="yen">¥</span>
+                    <input type="number" value={dancerFee} min={0} step={1000} onChange={e => setDancerFee(Number(e.target.value))} />
+                  </div>
+                  <div style={{display:'flex', gap:4}}>
+                    {[4,5,6].map(n => (
+                      <button key={n}
+                        className={`toggle-btn${dancerCount===n?' active':''}`}
+                        style={{padding:'4px 8px', fontSize:10, flex:'none'}}
+                        onClick={() => setDancerCount(n)}>{n}名</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="field">
+                <label className="label">DJ ギャラ / 1名</label>
+                <div className="input-row">
+                  <div className="input-wrap">
+                    <span className="yen">¥</span>
+                    <input type="number" value={djFee} min={0} step={1000} onChange={e => setDjFee(Number(e.target.value))} />
+                  </div>
+                  <div style={{display:'flex', gap:4}}>
+                    {[1,2].map(n => (
+                      <button key={n}
+                        className={`toggle-btn${djCount===n?' active':''}`}
+                        style={{padding:'4px 10px', fontSize:11, flex:'none'}}
+                        onClick={() => setDjCount(n)}>{n}名</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <Field label="交通費 / 1名" value={transport} onChange={setTransport} suffix={`× ${totalPerformers}名`} />
+
+              <div className="field">
+                <label className="label">スタッフ ギャラ / 1名</label>
+                <div className="input-row">
+                  <div className="input-wrap">
+                    <span className="yen">¥</span>
+                    <input type="number" value={staffFee} min={0} step={1000} onChange={e => setStaffFee(Number(e.target.value))} />
+                  </div>
+                  <div style={{display:'flex', gap:4}}>
+                    {[0,1,2].map(n => (
+                      <button key={n}
+                        className={`toggle-btn${staffCount===n?' active':''}`}
+                        style={{padding:'4px 8px', fontSize:10, flex:'none'}}
+                        onClick={() => setStaffCount(n)}>{n}名</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <Field label="機材・音響追加費" value={equipment} onChange={setEquipment} />
+              <Field label="宣伝・フライヤー費" value={promo}     onChange={setPromo} />
+              <Field label="雑費・予備費"       value={misc}      onChange={setMisc} />
+
+              <div className="subtotal">
+                <span className="subtotal-label">TOTAL FIXED COST</span>
+                <span className="subtotal-val">{fmt(totalCost)}</span>
+              </div>
+            </div>
+
+            {/* 収益設定 */}
+            <div className="card">
+              <div className="card-title"><span>🎟</span> 収益設定 / REVENUE</div>
+
+              <div className="field">
+                <label className="label">会場キャパシティ (MAX)</label>
+                <div className="input-row">
+                  <div className="input-wrap">
+                    <input type="number" value={capacity} min={10}
+                      onChange={e => setCapacity(Number(e.target.value))}
+                      style={{paddingLeft:10}} />
+                  </div>
+                  <div className="count-badge">名</div>
+                </div>
+              </div>
+
+              <Field label="入場料 (前払いチケット推奨)" value={entryFee} onChange={setEntryFee} />
+
+              <div className="field">
+                <label className="label">ドリンク収益モデル</label>
+                <div className="toggle-row">
+                  {[["none","なし"],["split","収益一部"],["included","込み"]].map(([v,l]) => (
+                    <button key={v} className={`toggle-btn${drinkMode===v?' active':''}`}
+                      onClick={() => setDrinkMode(v)}>{l}</button>
+                  ))}
+                </div>
+                {drinkMode === "split" &&
+                  <Field label="ドリンク収益 / 1人あたり (会場との按分後)" value={drinkPerPax} onChange={setDrinkPerPax} />
+                }
+                {drinkMode === "included" &&
+                  <div className="note-item" style={{fontSize:10, color:'#888', paddingLeft:12}}>
+                    ドリンク込みの場合は入場料に含めてください
+                  </div>
+                }
+              </div>
+
+              <hr className="divider" />
+
+              <div className="field">
+                <label className="label">収益単価 / 1人</label>
+                <div style={{fontSize:22, fontFamily:"'Bebas Neue',sans-serif", color:'#00FFB2', letterSpacing:2}}>
+                  {fmt(revenuePerPax)}
+                </div>
+              </div>
+
+              <div className="note-card">
+                <div className="note-title">▸ CUBE 六本木 料金メモ</div>
+                <div className="note-item">入場料は100%キックバック（全額主催者へ）</div>
+                <div className="note-item">来場者全員にドリンクチケット¥500 / 枚（会場収入）</div>
+                <div className="note-item">23:00超の延長は¥7,000 / 30分</div>
+                <div className="note-item">会場スタッフ受付代行は別途¥10,000</div>
+                <div className="note-item">音響・照明オペレーター必要時は別途¥15,000</div>
+                <div className="note-item">出演者への源泉徴収 (10.21%) の要否</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 結果 */}
+          <div className="result-card" id="result-section">
+            <div className="card-title" style={{marginBottom:20}}>
+              <span>📊</span> 損益分岐点 / BREAK-EVEN ANALYSIS
+            </div>
+
+            <div className="result-grid">
+              <div className="metric">
+                <div className={`metric-val ${breakevenClass}`}>
+                  {breakeven > 9999 ? "∞" : fmtN(breakeven)}
+                </div>
+                <div className="metric-label">損益分岐 人数</div>
+              </div>
+              <div className="metric">
+                <div className={`metric-val ${breakevenClass}`}>
+                  {breakeven > 9999 ? "—" : `${Math.round(breakeven / capacity * 100)}%`}
+                </div>
+                <div className="metric-label">必要集客率</div>
+              </div>
+              <div className="metric">
+                <div className={`metric-val ${pnlAtFull >= 0 ? 'good' : 'bad'}`}
+                  style={{fontSize: Math.abs(pnlAtFull) > 99999 ? 18 : 28}}>
+                  {fmt(pnlAtFull)}
+                </div>
+                <div className="metric-label">満員時 利益</div>
+              </div>
+            </div>
+
+            <div className="progress-section">
+              <div className="progress-label">
+                <span>0</span>
+                <span>損益分岐: {fmtN(breakeven)}名</span>
+                <span>MAX: {fmtN(capacity)}名</span>
+              </div>
+              <div className="progress-bar">
+                <div className="progress-fill"
+                  style={{width:`${Math.min(breakevenRatio, 100)}%`, background: progressColor}} />
+              </div>
+            </div>
+
+            <div style={{marginTop:20}}>
+              <div className="card-title" style={{fontSize:14, marginBottom:12}}>
+                <span>🎯</span> 集客シナリオ別 損益
+              </div>
+              <div className="scenarios">
+                {[
+                  [`0% (0名)`,                               revenuePerPax * 0 - totalCost],
+                  [`30% (${Math.floor(capacity*0.3)}名)`,   revenuePerPax * Math.floor(capacity * 0.3) - totalCost],
+                  [`50% (${Math.floor(capacity*0.5)}名)`,   pnlAt50],
+                  [`70% (${Math.floor(capacity*0.7)}名)`,   revenuePerPax * Math.floor(capacity * 0.7) - totalCost],
+                  [`100% (${capacity}名)`,                  pnlAtFull],
+                ].map(([label, pnl]) => (
+                  <div className="scenario-row" key={label}>
+                    <span className="scenario-label">{label}</span>
+                    <span className={`scenario-pnl ${pnl >= 0 ? 'pos' : 'neg'}`}>
+                      {pnl >= 0 ? `+${fmt(pnl)}` : fmt(pnl)}
+                    </span>
+                    <span className="scenario-capacity">{pnl >= 0 ? '✓ 黒字' : '✗ 赤字'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <button className="export-btn" onClick={handleExport} disabled={exporting}>
+            {exporting ? '⏳ 出力中...' : '📷 結果を画像で保存'}
+          </button>
+
+          <div style={{textAlign:'center', marginTop:20, fontSize:9, color:'#333', letterSpacing:2, paddingBottom:32}}>
+            ALL FIGURES ARE ESTIMATES · VERIFY VENUE COSTS DIRECTLY WITH CUBE ROPPONGI
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
