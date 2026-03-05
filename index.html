@@ -34,10 +34,10 @@
       font-size: 11px; color: #555; pointer-events: none; }
     input[type="number"] {
       width: 100%; background: #0D0D18; border: 1px solid #252535;
-      border-radius: 6px; padding: 8px 10px 8px 24px;
+      border-radius: 6px; padding: 6px 10px 10px 24px;
       color: #E0E0F0; font-family: 'Space Mono', monospace; font-size: 12px;
       outline: none; transition: border-color 0.2s;
-      line-height: normal; height: 36px; vertical-align: middle;
+      line-height: 1; height: 36px;
     }
     input[type="number"]:focus { border-color: #00FFB288; }
     input[type="number"]::-webkit-inner-spin-button { opacity: 0.3; }
@@ -173,8 +173,6 @@
       const progressColor  = breakevenRatio <= 60 ? "#00FFB2" : breakevenRatio <= 80 ? "#FFB800" : "#FF2D78";
       const breakevenClass = breakevenRatio <= 60 ? "good"    : breakevenRatio <= 80 ? "warn"    : "bad";
 
-      const guests = [0, 1, 2, 3, 4, 5, 6]
-
       return (
         <div className="app" id="capture-section">
           <div className="header">
@@ -191,19 +189,17 @@
               <Field label="会場費 (CUBE 六本木 / 土曜デイタイム6h)" value={venue} onChange={setVenue} />
               <div className="field">
                 <label className="label">ゲストダンサー ギャラ / 1名</label>
-                <div className="input-row">
-                  <div className="input-wrap">
-                    <span className="yen">¥</span>
-                    <input type="number" value={dancerFee} min={0} step={1000} onChange={e => setDancerFee(Number(e.target.value))} />
-                  </div>
-                  <div style={{display:'flex', gap:4}}>
-                    {[4,5,6].map(n => (
-                      <button key={n}
-                        className={`toggle-btn${dancerCount===n?' active':''}`}
-                        style={{padding:'4px 8px', fontSize:10, flex:'none'}}
-                        onClick={() => setDancerCount(n)}>{n}名</button>
-                    ))}
-                  </div>
+                <div className="input-wrap" style={{marginBottom:6}}>
+                  <span className="yen">¥</span>
+                  <input type="number" value={dancerFee} min={0} step={1000} onChange={e => setDancerFee(Number(e.target.value))} />
+                </div>
+                <div style={{display:'flex', gap:4, flexWrap:'wrap'}}>
+                  {[0,1,2,3,4,5,6].map(n => (
+                    <button key={n}
+                      className={`toggle-btn${dancerCount===n?' active':''}`}
+                      style={{padding:'4px 0', fontSize:10, flex:'1', minWidth:28}}
+                      onClick={() => setDancerCount(n)}>{n}名</button>
+                  ))}
                 </div>
               </div>
 
@@ -215,7 +211,7 @@
                     <input type="number" value={djFee} min={0} step={1000} onChange={e => setDjFee(Number(e.target.value))} />
                   </div>
                   <div style={{display:'flex', gap:4}}>
-                    {guests.map(n => (
+                    {[1,2].map(n => (
                       <button key={n}
                         className={`toggle-btn${djCount===n?' active':''}`}
                         style={{padding:'4px 10px', fontSize:11, flex:'none'}}
