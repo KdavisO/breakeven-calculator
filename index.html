@@ -93,6 +93,43 @@
       letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
     .export-btn:hover { background: #00FFB230; }
     .export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .preset-card { background: #0D0D18; border: 1px solid #00FFB233; border-radius: 12px;
+      padding: 16px 20px; margin-bottom: 16px; }
+    .preset-title { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 3px;
+      color: #00FFB299; margin-bottom: 12px; }
+    .preset-section-label { font-size: 8px; letter-spacing: 2px; color: #444; text-transform: uppercase;
+      margin-bottom: 6px; font-family: 'Space Mono', monospace; }
+
+    /* 会場ボタン */
+    .preset-venue-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .preset-venue-btn { display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 8px 14px; border-radius: 8px; border: 1px solid #1E1E2E;
+      background: #12121A; cursor: pointer; transition: all 0.2s; min-width: 64px; }
+    .preset-venue-btn:hover { border-color: #00FFB244; }
+    .preset-venue-btn.active { background: #00FFB218; border-color: #00FFB288; }
+    .preset-venue-btn.custom.active { background: #FF2D7818; border-color: #FF2D7888; }
+    .pvb-name { font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 1px;
+      color: #666; line-height: 1; }
+    .preset-venue-btn.active .pvb-name { color: #00FFB2; }
+    .preset-venue-btn.custom.active .pvb-name { color: #FF2D78; }
+    .pvb-area { font-family: 'Space Mono', monospace; font-size: 8px; color: #333; letter-spacing: 1px; }
+    .preset-venue-btn.active .pvb-area { color: #00FFB266; }
+
+    /* 曜日ボタン */
+    .preset-day-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 5px; }
+    .preset-day-btn { display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 7px 6px; border-radius: 7px; border: 1px solid #1E1E2E;
+      background: #12121A; cursor: pointer; transition: all 0.2s; }
+    .preset-day-btn:hover { border-color: #00FFB244; }
+    .preset-day-btn.active { background: #00FFB218; border-color: #00FFB288; }
+    .pdb-label { font-family: 'Space Mono', monospace; font-size: 9px; color: #555;
+      letter-spacing: 0.5px; white-space: nowrap; }
+    .preset-day-btn.active .pdb-label { color: #00FFB2cc; }
+    .pdb-fee { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; color: #777; }
+    .preset-day-btn.active .pdb-fee { color: #00FFB2; }
+    .pdb-est { font-size: 7px; color: #FFB80077; letter-spacing: 0.5px; }
+
+    .preset-est { font-size: 8px; color: #FFB80099; letter-spacing: 1px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -103,6 +140,49 @@
 
     const fmt  = (n) => `¥${Math.round(n).toLocaleString()}`;
     const fmtN = (n) => Math.round(n).toLocaleString();
+
+    // ── Venue Presets ────────────────────────────────────────────────
+    // キャパはスペック上限の2/3（ダンスイベント想定）
+    const VENUES = [
+      { id: 'solfa',  label: 'solfa',    cap: 75,  area: '中目黒' },
+      { id: 'hven',   label: 'HVEN',     cap: 50,  area: '中目黒' },
+      { id: 'room',   label: 'THE ROOM', cap: 50,  area: '渋谷'   },
+      { id: 'cube',   label: 'CUBE',     cap: 65,  area: '六本木'  },
+      { id: 'custom', label: 'UNKNOWN',  cap: null, area: '未定'   },
+    ];
+
+    // isEst: true → ※試算 表示
+    const DAYS = {
+      solfa: [
+        { id: 'weekday', label: '平日',        fee: 40000,  isEst: false },
+        { id: 'fri',     label: '金曜',        fee: 90000,  isEst: false },
+        { id: 'sat',     label: '土（デイ）',   fee: 70000,  isEst: false },
+        { id: 'satN',    label: '土（ナイト）', fee: 100000, isEst: false },
+        { id: 'sun',     label: '日曜',        fee: 80000,  isEst: false },
+      ],
+      hven: [
+        { id: 'weekday', label: '平日',  fee: 60000,  isEst: true },
+        { id: 'fri',     label: '金曜',  fee: 100000, isEst: true },
+        { id: 'sat',     label: '土曜',  fee: 120000, isEst: true },
+        { id: 'sun',     label: '日曜',  fee: 90000,  isEst: true },
+      ],
+      room: [
+        { id: 'weekday', label: '平日',  fee: 40000, isEst: true },
+        { id: 'fri',     label: '金曜',  fee: 60000, isEst: true },
+        { id: 'sat',     label: '土曜',  fee: 70000, isEst: true },
+        { id: 'sun',     label: '日曜',  fee: 55000, isEst: true },
+      ],
+      cube: [
+        { id: 'weekdayD', label: '平日デイ',    fee: 38000, isEst: false },
+        { id: 'weekdayN', label: '平日ナイト',  fee: 43000, isEst: false },
+        { id: 'friD',     label: '金デイ',      fee: 59000, isEst: false },
+        { id: 'friN',     label: '金ナイト',    fee: 68000, isEst: false },
+        { id: 'satD',     label: '土デイ',      fee: 78000, isEst: false },
+        { id: 'satN',     label: '土ナイト',    fee: 88000, isEst: false },
+        { id: 'sunD',     label: '日デイ',      fee: 74000, isEst: false },
+        { id: 'sunN',     label: '日ナイト',    fee: 62000, isEst: false },
+      ],
+    };
 
     function Field({ label, value, onChange, suffix }) {
       return (
@@ -121,7 +201,11 @@
     }
 
     function App() {
-      const [venue,      setVenue]      = useState(85000);
+      const [venueId,    setVenueId]    = useState('cube');
+      const [dayId,      setDayId]      = useState('satD');
+      const [isEst,      setIsEst]      = useState(false);
+
+      const [venue,      setVenue]      = useState(78000);
       const [dancerFee,  setDancerFee]  = useState(10000);
       const [dancerCount, setDancerCount] = useState(5);
       const [djFee,      setDjFee]      = useState(10000);
@@ -146,8 +230,34 @@
         link.click();
         setExporting(false);
       };
+
+      // プリセット選択ハンドラ
+      const handleVenueSelect = (v) => {
+        setVenueId(v.id);
+        setDayId(null);
+        if (v.id !== 'custom' && DAYS[v.id]) {
+          // キャパを自動セット
+          if (v.cap) setCapacity(v.cap);
+        }
+      };
+      const handleDaySelect = (day) => {
+        setDayId(day.id);
+        setVenue(day.fee);
+        setIsEst(day.isEst);
+      };
+
+      // ヘッダー表示用
+      const selectedVenue = VENUES.find(v => v.id === venueId);
+      const selectedDay   = venueId !== 'custom' && DAYS[venueId]
+        ? DAYS[venueId].find(d => d.id === dayId)
+        : null;
+      const headerVenueStr = selectedVenue
+        ? (selectedVenue.area ? `${selectedVenue.area} ${selectedVenue.label}` : 'カスタム')
+        : '—';
+      const headerDayStr = selectedDay ? selectedDay.label : (venueId === 'custom' ? 'カスタム' : '曜日未選択');
+
       const [drinkPerPax,setDrinkPerPax]= useState(500);
-      const [capacity,   setCapacity]   = useState(100);
+      const [capacity,   setCapacity]   = useState(65);
 
       const totalPerformers = dancerCount + djCount;
       const dancerTotal     = dancerFee  * dancerCount;
@@ -178,7 +288,44 @@
           <div className="header">
             <div className="title">BREAK EVEN</div>
             <div className="subtitle">HOUSE DANCE EVENT · FINANCIAL CALCULATOR</div>
-            <div className="event-info">📍 六本木 CUBE　⏱ 18:00 – 23:00　📅 WEEKEND</div>
+            <div className="event-info">📍 {headerVenueStr}　📅 {headerDayStr}{isEst ? '　⚠ 試算値' : ''}</div>
+          </div>
+
+          {/* ── Venue Preset ── */}
+          <div className="preset-card">
+            <div className="preset-title">🏠 VENUE PRESET</div>
+
+            {/* 会場 */}
+            <div className="preset-section-label">VENUE</div>
+            <div className="preset-venue-row">
+              {VENUES.map(v => (
+                <button key={v.id}
+                  className={`preset-venue-btn${v.id==='custom'?' custom':''}${venueId===v.id?' active':''}`}
+                  onClick={() => handleVenueSelect(v)}>
+                  <span className="pvb-name">{v.label}</span>
+                  {v.area && <span className="pvb-area">{v.area}</span>}
+                </button>
+              ))}
+            </div>
+
+            {/* 曜日 */}
+            {venueId !== 'custom' && DAYS[venueId] && (<>
+              <div className="preset-section-label">DAY &amp; TIME</div>
+              <div className="preset-day-row">
+                {DAYS[venueId].map(d => (
+                  <button key={d.id}
+                    className={`preset-day-btn${dayId===d.id?' active':''}`}
+                    onClick={() => handleDaySelect(d)}>
+                    <span className="pdb-label">{d.label}</span>
+                    <span className="pdb-fee">{fmt(d.fee)}</span>
+                    {d.isEst && <span className="pdb-est">※試算</span>}
+                  </button>
+                ))}
+              </div>
+              {DAYS[venueId].some(d => d.isEst) && (
+                <div className="preset-est">※ 試算値（公式料金は要確認）　キャパはスペック上限の1/2（ダンスイベント想定）</div>
+              )}
+            </>)}
           </div>
 
           <div className="grid">
@@ -186,7 +333,7 @@
             <div className="card">
               <div className="card-title"><span>💴</span> 固定費 / COSTS</div>
 
-              <Field label="会場費 (CUBE 六本木 / 土曜デイタイム6h)" value={venue} onChange={setVenue} />
+              <Field label={`会場費${isEst ? ' ※試算' : ''}`} value={venue} onChange={setVenue} />
               <div className="field">
                 <label className="label">ゲストダンサー ギャラ / 1名</label>
                 <div className="input-wrap" style={{marginBottom:6}}>
@@ -372,9 +519,9 @@
             </div>
           </div>
 
-          <button className="export-btn" onClick={handleExport} disabled={exporting}>
+          {/* <button className="export-btn" onClick={handleExport} disabled={exporting}>
             {exporting ? '⏳ 出力中...' : '📷 結果を画像で保存'}
-          </button>
+          </button> */}
 
           <div style={{textAlign:'center', marginTop:20, fontSize:9, color:'#333', letterSpacing:2, paddingBottom:32}}>
             ALL FIGURES ARE ESTIMATES · VERIFY VENUE COSTS DIRECTLY WITH CUBE ROPPONGI
