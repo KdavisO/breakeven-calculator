@@ -7,7 +7,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet" />
   <style>
@@ -34,10 +33,10 @@
       font-size: 11px; color: #555; pointer-events: none; }
     input[type="number"] {
       width: 100%; background: #0D0D18; border: 1px solid #252535;
-      border-radius: 6px; padding: 6px 10px 10px 24px;
+      border-radius: 6px; padding: 8px 10px 8px 24px;
       color: #E0E0F0; font-family: 'Space Mono', monospace; font-size: 12px;
       outline: none; transition: border-color 0.2s;
-      line-height: 1; height: 36px;
+
     }
     input[type="number"]:focus { border-color: #00FFB288; }
     input[type="number"]::-webkit-inner-spin-button { opacity: 0.3; }
@@ -86,13 +85,6 @@
       font-size: 10px; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
     .toggle-btn.active { background: #00FFB218; border-color: #00FFB266; color: #00FFB2; }
     .divider { border: none; border-top: 1px solid #1E1E2E; margin: 20px 0; }
-    .export-btn { display: flex; align-items: center; justify-content: center; gap: 8px;
-      width: 100%; margin-top: 16px; padding: 12px;
-      background: #00FFB218; border: 1px solid #00FFB266; border-radius: 8px;
-      color: #00FFB2; font-family: 'Space Mono', monospace; font-size: 11px;
-      letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
-    .export-btn:hover { background: #00FFB230; }
-    .export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .preset-card { background: #0D0D18; border: 1px solid #00FFB233; border-radius: 12px;
       padding: 16px 20px; margin-bottom: 16px; }
     .preset-title { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 3px;
@@ -125,6 +117,9 @@
     .pdb-label { font-family: 'Space Mono', monospace; font-size: 9px; color: #555;
       letter-spacing: 0.5px; white-space: nowrap; }
     .preset-day-btn.active .pdb-label { color: #00FFB2cc; }
+    .pdb-time { font-family: 'Space Mono', monospace; font-size: 8px; color: #3a3a5a;
+      letter-spacing: 0.3px; white-space: nowrap; }
+    .preset-day-btn.active .pdb-time { color: #00FFB244; }
     .pdb-fee { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; color: #777; }
     .preset-day-btn.active .pdb-fee { color: #00FFB2; }
     .pdb-est { font-size: 7px; color: #FFB80077; letter-spacing: 0.5px; }
@@ -142,7 +137,7 @@
     const fmtN = (n) => Math.round(n).toLocaleString();
 
     // ── Venue Presets ────────────────────────────────────────────────
-    // キャパはスペック上限の2/3（ダンスイベント想定）
+    // キャパはスペック上限の1/2（ダンスイベント想定）
     const VENUES = [
       { id: 'solfa',  label: 'solfa',    cap: 75,  area: '中目黒' },
       { id: 'hven',   label: 'HVEN',     cap: 50,  area: '中目黒' },
@@ -151,36 +146,83 @@
       { id: 'custom', label: 'UNKNOWN',  cap: null, area: '未定'   },
     ];
 
+    // ── Venue Notes ──────────────────────────────────────────────────
+    const VENUE_NOTES = {
+      solfa: {
+        title: '▸ solfa 中目黒 料金メモ',
+        est: false,
+        items: [
+          '入場収入からレンタル料を差し引いた差額が主催者へ（例: 収入¥120,000 − ¥80,000 = ¥40,000バック）',
+          'ドリンクは別途設定（1D ¥700程度）、会場ドリンク売上は会場側',
+          '時間超過分の延長料金は要確認',
+          '問い合わせ: solfa@nakameguro-solfa.com',
+        ],
+      },
+      hven: {
+        title: '▸ HVEN 中目黒 料金メモ',
+        est: true,
+        items: [
+          '料金は試算値。貸切プランの詳細は要問合せ（03-6277-5740）',
+          'ミュージックバータイム: 22:00〜05:00',
+          'ドリンクシステム・キックバック条件は要確認',
+          'イベント開催実績あり（アート展示・ファッション・音楽系）',
+        ],
+      },
+      room: {
+        title: '▸ THE ROOM 渋谷 料金メモ',
+        est: true,
+        items: [
+          '料金は試算値。毎日自主イベント開催のため、貸切枠は要確認',
+          '1992年オープン老舗。ジャズ・ソウル・ハウス系',
+          'ドリンクシステム・入場料バック条件は要確認',
+          '問い合わせ: theroom.jp よりコンタクト',
+        ],
+      },
+      cube: {
+        title: '▸ CUBE 六本木 料金メモ',
+        est: false,
+        items: [
+          '入場料は100%キックバック（全額主催者へ）',
+          '来場者全員にドリンクチケット¥500 / 枚（ショーケース中心イベントは2枚制）',
+          '延長: 平日¥5,000 / 金土日祝¥7,000（各30分）',
+          '会場スタッフ受付代行は別途¥10,000',
+          '音響・照明オペレーター必要時は別途¥15,000',
+          '出演者への源泉徴収 (10.21%) の要否を確認',
+        ],
+      },
+      custom: null,
+    };
+
     // isEst: true → ※試算 表示
     const DAYS = {
       solfa: [
-        { id: 'weekday', label: '平日',        fee: 40000,  isEst: false },
-        { id: 'fri',     label: '金曜',        fee: 90000,  isEst: false },
-        { id: 'sat',     label: '土（デイ）',   fee: 70000,  isEst: false },
-        { id: 'satN',    label: '土（ナイト）', fee: 100000, isEst: false },
-        { id: 'sun',     label: '日曜',        fee: 80000,  isEst: false },
+        { id: 'weekday', label: '平日 月〜木', time: '7h',           fee: 40000,  isEst: false },
+        { id: 'fri',     label: '金曜',        time: '要確認',       fee: 90000,  isEst: false },
+        { id: 'sat',     label: '土 デイ',     time: '15:00〜21:00', fee: 70000,  isEst: false },
+        { id: 'satN',    label: '土 ナイト',   time: '21:00〜',      fee: 100000, isEst: false },
+        { id: 'sun',     label: '日祝',        time: '要確認',       fee: 80000,  isEst: false },
       ],
       hven: [
-        { id: 'weekday', label: '平日',  fee: 60000,  isEst: true },
-        { id: 'fri',     label: '金曜',  fee: 100000, isEst: true },
-        { id: 'sat',     label: '土曜',  fee: 120000, isEst: true },
-        { id: 'sun',     label: '日曜',  fee: 90000,  isEst: true },
+        { id: 'weekday', label: '平日',  time: '要確認', fee: 60000,  isEst: true },
+        { id: 'fri',     label: '金曜',  time: '要確認', fee: 100000, isEst: true },
+        { id: 'sat',     label: '土曜',  time: '要確認', fee: 120000, isEst: true },
+        { id: 'sun',     label: '日曜',  time: '要確認', fee: 90000,  isEst: true },
       ],
       room: [
-        { id: 'weekday', label: '平日',  fee: 40000, isEst: true },
-        { id: 'fri',     label: '金曜',  fee: 60000, isEst: true },
-        { id: 'sat',     label: '土曜',  fee: 70000, isEst: true },
-        { id: 'sun',     label: '日曜',  fee: 55000, isEst: true },
+        { id: 'weekday', label: '平日',  time: '要確認', fee: 40000, isEst: true },
+        { id: 'fri',     label: '金曜',  time: '要確認', fee: 60000, isEst: true },
+        { id: 'sat',     label: '土曜',  time: '要確認', fee: 70000, isEst: true },
+        { id: 'sun',     label: '日曜',  time: '要確認', fee: 55000, isEst: true },
       ],
       cube: [
-        { id: 'weekdayD', label: '平日デイ',    fee: 38000, isEst: false },
-        { id: 'weekdayN', label: '平日ナイト',  fee: 43000, isEst: false },
-        { id: 'friD',     label: '金デイ',      fee: 59000, isEst: false },
-        { id: 'friN',     label: '金ナイト',    fee: 68000, isEst: false },
-        { id: 'satD',     label: '土デイ',      fee: 78000, isEst: false },
-        { id: 'satN',     label: '土ナイト',    fee: 88000, isEst: false },
-        { id: 'sunD',     label: '日デイ',      fee: 74000, isEst: false },
-        { id: 'sunN',     label: '日ナイト',    fee: 62000, isEst: false },
+        { id: 'weekdayD', label: '平日 デイ',   time: '5h / 〜22:30', fee: 38000, isEst: false },
+        { id: 'weekdayN', label: '平日 ナイト', time: '22:30〜5:30',  fee: 43000, isEst: false },
+        { id: 'friD',     label: '金 デイ',     time: '5h / 〜22:30', fee: 59000, isEst: false },
+        { id: 'friN',     label: '金 ナイト',   time: '22:30〜5:30',  fee: 68000, isEst: false },
+        { id: 'satD',     label: '土 デイ',     time: '6h / 〜22:30', fee: 78000, isEst: false },
+        { id: 'satN',     label: '土 ナイト',   time: '22:30〜5:30',  fee: 88000, isEst: false },
+        { id: 'sunD',     label: '日 デイ',     time: '6h / 〜22:30', fee: 74000, isEst: false },
+        { id: 'sunN',     label: '日 ナイト',   time: '22:30〜5:30',  fee: 62000, isEst: false },
       ],
     };
 
@@ -219,18 +261,6 @@
       const [entryFee,   setEntryFee]   = useState(2000);
       const [drinkMode,  setDrinkMode]  = useState("none");
 
-      const [exporting, setExporting] = useState(false);
-      const handleExport = async () => {
-        setExporting(true);
-        const el = document.getElementById('capture-section');
-        const canvas = await html2canvas(el, { backgroundColor: '#0A0A0F', scale: 2, useCORS: true });
-        const link = document.createElement('a');
-        link.download = 'breakeven-result.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        setExporting(false);
-      };
-
       // プリセット選択ハンドラ
       const handleVenueSelect = (v) => {
         setVenueId(v.id);
@@ -252,9 +282,9 @@
         ? DAYS[venueId].find(d => d.id === dayId)
         : null;
       const headerVenueStr = selectedVenue
-        ? (selectedVenue.area ? `${selectedVenue.area} ${selectedVenue.label}` : 'カスタム')
+        ? (selectedVenue.area ? `${selectedVenue.area} ${selectedVenue.label}` : 'UNKNOWN')
         : '—';
-      const headerDayStr = selectedDay ? selectedDay.label : (venueId === 'custom' ? 'カスタム' : '曜日未選択');
+      const headerDayStr = selectedDay ? selectedDay.label : (venueId === 'custom' ? '未定' : '曜日未選択');
 
       const [drinkPerPax,setDrinkPerPax]= useState(500);
       const [capacity,   setCapacity]   = useState(65);
@@ -317,6 +347,7 @@
                     className={`preset-day-btn${dayId===d.id?' active':''}`}
                     onClick={() => handleDaySelect(d)}>
                     <span className="pdb-label">{d.label}</span>
+                    <span className="pdb-time">{d.time}</span>
                     <span className="pdb-fee">{fmt(d.fee)}</span>
                     {d.isEst && <span className="pdb-est">※試算</span>}
                   </button>
@@ -403,7 +434,7 @@
               <div className="card-title"><span>🎟</span> 収益設定 / REVENUE</div>
 
               <div className="field">
-                <label className="label">会場キャパシティ (MAX)</label>
+                <label className="label">会場キャパシティ (公式スペックの1/2で表示)</label>
                 <div className="input-row">
                   <div className="input-wrap">
                     <input type="number" value={capacity} min={10}
@@ -443,15 +474,18 @@
                 </div>
               </div>
 
-              <div className="note-card">
-                <div className="note-title">▸ CUBE 六本木 料金メモ</div>
-                <div className="note-item">入場料は100%キックバック（全額主催者へ）</div>
-                <div className="note-item">来場者全員にドリンクチケット¥500 / 枚（会場収入）</div>
-                <div className="note-item">23:00超の延長は¥7,000 / 30分</div>
-                <div className="note-item">会場スタッフ受付代行は別途¥10,000</div>
-                <div className="note-item">音響・照明オペレーター必要時は別途¥15,000</div>
-                <div className="note-item">出演者への源泉徴収 (10.21%) の要否</div>
-              </div>
+              {(() => {
+                const notes = VENUE_NOTES[venueId];
+                if (!notes) return null;
+                return (
+                  <div className="note-card">
+                    <div className="note-title">{notes.title}</div>
+                    {notes.items.map((item, i) => (
+                      <div key={i} className="note-item">{item}</div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -518,10 +552,6 @@
               </div>
             </div>
           </div>
-
-          {/* <button className="export-btn" onClick={handleExport} disabled={exporting}>
-            {exporting ? '⏳ 出力中...' : '📷 結果を画像で保存'}
-          </button> */}
 
           <div style={{textAlign:'center', marginTop:20, fontSize:9, color:'#333', letterSpacing:2, paddingBottom:32}}>
             ALL FIGURES ARE ESTIMATES · VERIFY VENUE COSTS DIRECTLY WITH CUBE ROPPONGI
